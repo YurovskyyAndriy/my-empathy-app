@@ -1,0 +1,82 @@
+version: '3.9'
+
+services:
+  backend-node:
+    build:
+      context: ./backend/node
+    container_name: backend-node
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    environment:
+      - VECTOR_DB_URL=${VECTOR_DB_URL}
+      - MCP_ENABLED=${MCP_ENABLED}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - WHISPER_HOST=${WHISPER_HOST}
+    volumes:
+      - ./backend/node:/app
+    restart: unless-stopped
+    depends_on:
+      - vector-store
+      - speech-service
+
+  backend-python:
+    build:
+      context: ./backend/python
+    container_name: backend-python
+    ports:
+      - "5010:5010"
+    env_file:
+      - .env
+    volumes:
+      - ./backend/python:/app
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "${PORT}:${PORT}"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - VECTOR_DB_URL=${VECTOR_DB_URL}
+      - MCP_ENABLED=${MCP_ENABLED}
+      - WHISPER_HOST=${WHISPER_HOST}
+    volumes:
+      - ./frontend:/app
+    restart: unless-stopped
+
+  speech-service:
+    build:
+      context: ./speech-service
+    container_name: speech-service
+    ports:
+      - "5005:5005"
+    env_file:
+      - .env
+    volumes:
+      - ./speech-service:/app
+    restart: unless-stopped
+
+  vector-store:
+    image: semitechnologies/weaviate:latest
+    container_name: vector-store
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      ENABLE_MODULES: ''
+      CLUSTER_HOSTNAME: 'node1'
+
+networks:
+  default:
+    name: empathy-net

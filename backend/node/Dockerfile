@@ -16,7 +16,7 @@ COPY src ./src
 RUN npm install -g typescript
 
 # Build TypeScript
-RUN npm run build
+RUN npm run build && ls -la ./dist
 
 # Expose the port used by the app
 EXPOSE 3000

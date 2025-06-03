@@ -10,12 +10,11 @@ services:
     env_file:
       - .env
     environment:
+      - NODE_ENV=production
       - VECTOR_DB_URL=${VECTOR_DB_URL}
       - MCP_ENABLED=${MCP_ENABLED}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - WHISPER_HOST=${WHISPER_HOST}
-    volumes:
-      - ./backend/node:/app
     restart: unless-stopped
     depends_on:
       - vector-store
@@ -29,8 +28,6 @@ services:
       - "5010:5010"
     env_file:
       - .env
-    volumes:
-      - ./backend/python:/app
     restart: unless-stopped
 
   frontend:
@@ -42,13 +39,9 @@ services:
     env_file:
       - .env
     environment:
-      - NODE_ENV=${NODE_ENV}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - VECTOR_DB_URL=${VECTOR_DB_URL}
-      - MCP_ENABLED=${MCP_ENABLED}
-      - WHISPER_HOST=${WHISPER_HOST}
-    volumes:
-      - ./frontend:/app
+      - NODE_ENV=production
+      - FRONTEND_PORT=${FRONTEND_PORT}
+      - VITE_BACKEND_URL=http://backend-node:4000
     restart: unless-stopped
 
   speech-service:
@@ -59,8 +52,6 @@ services:
       - "5005:5005"
     env_file:
       - .env
-    volumes:
-      - ./speech-service:/app
     restart: unless-stopped
 
   vector-store:

@@ -4,22 +4,27 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
+# Install global dependencies
+RUN npm install -g typescript nodemon concurrently
+
+# Copy package files
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
 
-# Copy source code and config
+# Copy source code and config for production build
 COPY tsconfig.json ./
 COPY src ./src
 
-# Install TypeScript globally (to ensure tsc is available)
-RUN npm install -g typescript
-
-# Build TypeScript
-RUN npm run build && ls -la ./dist
+# Build TypeScript for production
+RUN npm run build
 
 # Expose the port used by the app
-EXPOSE 3000
+EXPOSE 4000
 
-# Start the app
+# Default to production mode
+ENV NODE_ENV=production
+
+# Start command will be overridden by docker-compose in development
 CMD ["node", "dist/index.js"]

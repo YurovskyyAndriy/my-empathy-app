@@ -1,5 +1,7 @@
-# Use full Node.js v20 image
-FROM node:20
+# frontend/Dockerfile
+
+# Use Node.js v20 as the base image
+FROM node:20-slim
 
 # Set working directory
 WORKDIR /app
@@ -7,8 +9,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies and rollup explicitly
-RUN npm install -g rollup && npm install
+# Install dependencies
+RUN npm install
 
 # Copy the rest of the application
 COPY . .
@@ -17,4 +19,4 @@ COPY . .
 EXPOSE 5173
 
 # Start Vite dev server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"] 
+CMD ["npm", "run", "dev", "--", "--host"] 

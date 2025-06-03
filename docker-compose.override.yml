@@ -1,0 +1,35 @@
+version: '3.9'
+
+services:
+  backend-node:
+    volumes:
+      - ./backend/node:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: >
+      sh -c "npm install &&
+             npm run build -- --watch &
+             nodemon --watch dist dist/index.js"
+
+  backend-python:
+    volumes:
+      - ./backend/python:/app
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+
+  frontend:
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm run dev
+
+  speech-service:
+    volumes:
+      - ./speech-service:/app
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1 

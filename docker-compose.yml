@@ -1,43 +1,33 @@
 version: '3.9'
 
 services:
-  backend-node:
+  backend:
     build:
-      context: ./backend/node
-    container_name: backend-node
+      context: ./backend/python
+    container_name: backend-python
     ports:
-      - "4000:4000"
+      - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
     env_file:
       - .env
     environment:
-      - NODE_ENV=production
-      - VECTOR_DB_URL=${VECTOR_DB_URL}
-      - MCP_ENABLED=${MCP_ENABLED}
+      - PYTHONUNBUFFERED=1
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - WHISPER_HOST=${WHISPER_HOST}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4-turbo-preview}
+      - VECTOR_DB_URL=${VECTOR_DB_URL:-http://vector-store:8080}
+      - VECTOR_DB_CONFIDENCE_THRESHOLD=${VECTOR_DB_CONFIDENCE_THRESHOLD:-0.85}
+      - AB_TEST_OPENAI_WEIGHT=${AB_TEST_OPENAI_WEIGHT:-100}
+      - AB_TEST_VECTOR_DB_WEIGHT=${AB_TEST_VECTOR_DB_WEIGHT:-0}
+      - AB_TEST_LOCAL_LLM_WEIGHT=${AB_TEST_LOCAL_LLM_WEIGHT:-0}
+      - DEFAULT_TEMPLATE_ID=${DEFAULT_TEMPLATE_ID:-ei-analysis}
+      - EI_SYSTEM_PROMPT=${EI_SYSTEM_PROMPT}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
     restart: unless-stopped
     depends_on:
       - vector-store
       - speech-service
     volumes:
-      - ./backend-node:/app
-      - /app/node_modules
-    command: npm run dev
-
-  backend-python:
-    build:
-      context: ./backend/python
-    container_name: backend-python
-    ports:
-      - "5010:5010"
-    env_file:
-      - .env
-    restart: unless-stopped
-    volumes:
-      - ./backend-python:/app
-    environment:
-      - PYTHONUNBUFFERED=1
-    command: uvicorn app.main:app --host 0.0.0.0 --reload
+      - ./backend/python:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-4000} --reload
 
   frontend:
     build:
@@ -48,7 +38,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${ENVIRONMENT:-development}
+      - BACKEND_URL=http://backend:${BACKEND_PORT:-4000}
     command: npm run dev -- --host
 
   speech-service:
@@ -64,6 +55,7 @@ services:
       - ./speech-service:/app
     environment:
       - PYTHONUNBUFFERED=1
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     command: python main.py
 
   vector-store:
@@ -73,7 +65,7 @@ services:
       - "8080:8080"
     restart: unless-stopped
     environment:
-      QUERY_DEFAULTS_LIMIT: 25
+      QUERY_DEFAULTS_LIMIT: ${VECTOR_DB_QUERY_LIMIT:-25}
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
       DEFAULT_VECTORIZER_MODULE: 'none'

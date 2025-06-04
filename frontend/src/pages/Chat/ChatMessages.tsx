@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 import styled from 'styled-components';
-import { Typography } from 'antd';
+import { Typography, Descriptions } from 'antd';
 import type { Message } from '../../types';
 import { useAppTheme } from '../../hooks/useAppTheme';
 
@@ -49,11 +49,21 @@ const MessageBubble = styled.div<{ isUser: boolean }>`
 `;
 
 const Analysis = styled.div`
-  margin-top: ${({ theme }) => theme.padding / 2}px;
+  margin-top: ${({ theme }) => theme.padding}px;
   padding: ${({ theme }) => theme.padding}px;
   background: ${({ theme }) => theme.colorFillQuaternary};
   border-radius: ${({ theme }) => theme.borderRadiusLG}px;
   font-size: 0.9em;
+
+  .ant-descriptions {
+    .ant-descriptions-item-label {
+      color: ${({ theme }) => theme.colorTextSecondary};
+      font-weight: 500;
+    }
+    .ant-descriptions-item-content {
+      color: ${({ theme }) => theme.colorText};
+    }
+  }
 `;
 
 interface ChatMessagesProps {
@@ -71,9 +81,39 @@ const ChatMessages: FC<ChatMessagesProps> = ({ messages, showAnalysis }) => {
           <Text style={{ color: 'inherit', whiteSpace: 'pre-wrap' }}>
             {message.content}
           </Text>
-          {showAnalysis && message.analysis && (
+          {showAnalysis && message.response?.analysis && !message.isUser && (
             <Analysis theme={theme}>
-              <Text type="secondary">{message.analysis}</Text>
+              <Descriptions column={1} size="small">
+                <Descriptions.Item label="Self Awareness">
+                  <div>
+                    <div>Emotional Background: {message.response.analysis.self_awareness.emotional_background}</div>
+                    <div>Present Elements: {message.response.analysis.self_awareness.present_elements}</div>
+                    <div>Missing Elements: {message.response.analysis.self_awareness.missing_elements}</div>
+                    <div>Step Back Analysis: {message.response.analysis.self_awareness.step_back_analysis}</div>
+                  </div>
+                </Descriptions.Item>
+                <Descriptions.Item label="Self Regulation">
+                  <div>
+                    <div>Current Phrasing: {message.response.analysis.self_regulation.current_phrasing}</div>
+                    <div>Improvement Examples: {message.response.analysis.self_regulation.improvement_examples}</div>
+                    <div>Alternative Phrases: {message.response.analysis.self_regulation.alternative_phrases}</div>
+                  </div>
+                </Descriptions.Item>
+                <Descriptions.Item label="Empathy">
+                  <div>
+                    <div>Missing Elements: {message.response.analysis.empathy.missing_elements}</div>
+                    <div>Potential Additions: {message.response.analysis.empathy.potential_additions}</div>
+                    <div>Understanding Examples: {message.response.analysis.empathy.understanding_examples}</div>
+                  </div>
+                </Descriptions.Item>
+                <Descriptions.Item label="Social Skills">
+                  <div>
+                    <div>Current Impact: {message.response.analysis.social_skills.current_impact}</div>
+                    <div>Improvements: {message.response.analysis.social_skills.improvements}</div>
+                    <div>Examples: {message.response.analysis.social_skills.examples}</div>
+                  </div>
+                </Descriptions.Item>
+              </Descriptions>
             </Analysis>
           )}
         </MessageBubble>

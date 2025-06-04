@@ -1,23 +1,13 @@
 version: '3.9'
 
 services:
-  backend-node:
-    volumes:
-      - ./backend/node:/app
-      - /app/node_modules
-    environment:
-      - NODE_ENV=development
-    command: >
-      sh -c "npm install &&
-             npm run build -- --watch &
-             nodemon --watch dist dist/index.js"
-
-  backend-python:
+  backend:
     volumes:
       - ./backend/python:/app
     environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+    command: uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-4000} --reload
 
   frontend:
     volumes:
@@ -25,11 +15,16 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    command: npm run dev
+      - VITE_BACKEND_URL=http://localhost:${BACKEND_PORT:-4000}
+    command: npm run dev -- --host
 
   speech-service:
     volumes:
       - ./speech-service:/app
     environment:
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1 
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+
+  vector-store:
+    environment:
+      - ENVIRONMENT=development 

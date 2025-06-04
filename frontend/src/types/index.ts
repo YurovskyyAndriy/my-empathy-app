@@ -23,7 +23,7 @@ export interface SocialSkillsAnalysis {
   examples: string;
 }
 
-export interface FullAnalysis {
+export interface Analysis {
   self_awareness: SelfAwarenessAnalysis;
   self_regulation: SelfRegulationAnalysis;
   empathy: EmpathyAnalysis;
@@ -31,7 +31,12 @@ export interface FullAnalysis {
 }
 
 export interface EmpathyResponse {
-  analysis: FullAnalysis;
+  analysis: Analysis;
+  long_version: string;
+  short_version: string;
+}
+
+export interface RewrittenMessage {
   long_version: string;
   short_version: string;
 }
@@ -40,6 +45,6 @@ export interface Message {
   id: string;
   content: string;
   isUser: boolean;
-  response?: EmpathyResponse;
   timestamp: number;
+  response?: EmpathyResponse;
 } 

@@ -1,3 +1,1 @@
-export const API_URL = process.env.NODE_ENV === 'production' 
-  ? 'http://backend-node:4000'
-  : 'http://localhost:4000'; 
+export const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4000'; 

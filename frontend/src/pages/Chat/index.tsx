@@ -1,54 +1,26 @@
 import { type FC, useState } from 'react';
 import styled from 'styled-components';
-import { Switch, Space, Typography, Layout, message } from 'antd';
+import { Layout } from 'antd';
 import type { Message } from '../../types';
-import ChatMessages from './ChatMessages';
-import ChatInput from './ChatInput';
 import { useAppTheme } from '../../hooks/useAppTheme';
 import { API_URL } from '../../config';
+import MessageInputForm from '../../components/MessageInputForm';
+import AnalysisTimer from '../../components/AnalysisTimer';
+import AnalysisResults from '../../components/AnalysisResults';
 
-const { Title } = Typography;
 const { Content } = Layout;
 
 const PageContainer = styled.div`
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
+  padding: ${({ theme }) => theme.padding * 2}px;
   min-height: calc(100vh - ${({ theme }) => theme.headerHeight}px);
   background: transparent;
 `;
 
-const HeaderSection = styled.div`
-  position: fixed;
-  top: ${({ theme }) => theme.headerHeight}px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 800px;
-  background: transparent;
-  padding: ${({ theme }) => theme.padding}px ${({ theme }) => theme.padding * 2}px 0;
-  z-index: 99;
-
-  .ant-typography {
-    margin-bottom: ${({ theme }) => theme.padding / 2}px;
-    color: ${({ theme }) => theme.colorTextHeading};
-  }
-
-  .ant-space {
-    margin-bottom: 0;
-  }
-`;
-
-const ChatContainer = styled(Content)`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  margin-top: calc(${({ theme }) => theme.headerHeight + theme.padding + 108}px);
-  margin-bottom: ${({ theme }) => theme.controlHeight * 2 + theme.padding * 2}px;
+const ContentContainer = styled(Content)`
+  margin-top: ${({ theme }) => theme.headerHeight}px;
   background: transparent;
 `;
 
@@ -56,77 +28,94 @@ interface ChatProps {}
 
 const Chat: FC<ChatProps> = () => {
   const theme = useAppTheme();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState<Message | null>(null);
+  const [showResults, setShowResults] = useState(false);
 
   const handleSend = async (content: string) => {
     try {
       setIsLoading(true);
+      setShowResults(false);
       
-      // Add user message immediately
-      const userMessage: Message = {
+      // Create message object
+      const message: Message = {
         id: Date.now().toString(),
         content,
         isUser: true,
         timestamp: Date.now(),
       };
-      setMessages(prev => [...prev, userMessage]);
+      setCurrentMessage(message);
 
+      // Choose endpoint based on showAnalysis toggle
+      const endpoint = showAnalysis ? 'analyzeMessage' : 'rewriteMessage';
+      
       // Send message to backend
-      const response = await fetch(`${API_URL}/api/chat`, {
+      const response = await fetch(`${API_URL}/api/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
-        body: JSON.stringify({ 
-          message: content,
-          userId: 'test-user', // TODO: Replace with actual user ID
-          sessionId: Date.now().toString() // TODO: Use proper session management
-        }),
+        body: JSON.stringify({ message: content }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from server');
+        throw new Error(`Server error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
       
-      // Add bot response
-      const botResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: data.message,
-        isUser: false,
-        analysis: data.analysis,
-        timestamp: Date.now() + 1,
-      };
+      // Update message with response
+      setCurrentMessage(prev => 
+        prev ? {
+          ...prev,
+          response: data
+        } : null
+      );
       
-      setMessages(prev => [...prev, botResponse]);
+      setShowResults(true);
     } catch (error) {
-      message.error('Failed to send message. Please try again.');
-      console.error('Chat error:', error);
+      console.error('Error sending message:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleAskAgain = () => {
+    setShowResults(false);
+    if (currentMessage) {
+      handleSend(currentMessage.content);
+    }
+  };
+
   return (
     <PageContainer theme={theme}>
-      <HeaderSection theme={theme}>
-        <Title level={2}>Empathy Chat</Title>
-        <Space>
-          <Switch
-            checked={showAnalysis}
-            onChange={setShowAnalysis}
-            checkedChildren="Hide Analysis"
-            unCheckedChildren="Show Analysis"
+      <ContentContainer theme={theme}>
+        {!isLoading && !showResults && (
+          <MessageInputForm
+            onSubmit={handleSend}
+            isLoading={isLoading}
+            showAnalysis={showAnalysis}
+            onToggleAnalysis={setShowAnalysis}
           />
-        </Space>
-      </HeaderSection>
-      <ChatContainer theme={theme}>
-        <ChatMessages messages={messages} showAnalysis={showAnalysis} />
-      </ChatContainer>
-      <ChatInput onSend={handleSend} isLoading={isLoading} />
+        )}
+        
+        {isLoading && (
+          <AnalysisTimer
+            showAnalysis={showAnalysis}
+            onComplete={() => setShowResults(true)}
+          />
+        )}
+        
+        {showResults && currentMessage && (
+          <AnalysisResults 
+            message={currentMessage}
+            onAskAgain={handleAskAgain}
+          />
+        )}
+      </ContentContainer>
     </PageContainer>
   );
 };

@@ -42,9 +42,9 @@ const Header: FC = () => {
   } as const;
 
   const menuItems = [
-    { key: 'chat', label: 'Chat', path: '/chat' },
+    { key: 'home', label: 'Home', path: '/' },
+    { key: 'analyze', label: 'Analyze', path: '/analyze' },
     { key: 'instructions', label: 'Instructions', path: '/instructions' },
-    { key: 'materials', label: 'Materials', path: '/materials' },
   ];
 
   return (

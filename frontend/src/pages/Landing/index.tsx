@@ -40,8 +40,10 @@ const Landing: FC = () => {
           Our app helps you understand and improve the emotional impact of your messages.
         </Paragraph>
         <Space size="large">
-          <Link to="/chat">
-            <Button type="primary" size="large">Try Now</Button>
+          <Link to="/analyze">
+            <Button type="primary" size="large">
+              <Link to="/analyze">Start Analysis</Link>
+            </Button>
           </Link>
           <Link to="/instructions">
             <Button size="large">Learn More</Button>

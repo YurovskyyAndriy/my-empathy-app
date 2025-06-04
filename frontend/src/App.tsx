@@ -1,5 +1,5 @@
 import { type FC } from 'react';
-import { ConfigProvider, theme } from 'antd';
+import { ConfigProvider, theme, App as AntApp } from 'antd';
 import { ThemeProvider } from 'styled-components';
 import { BrowserRouter } from 'react-router-dom';
 import Router from './Router';
@@ -20,13 +20,15 @@ const App: FC = () => {
 
   return (
     <ConfigProvider theme={themeConfig}>
-      <ThemeProvider theme={createTheme(token)}>
-        <BrowserRouter>
-          <Layout>
-            <Router />
-          </Layout>
-        </BrowserRouter>
-      </ThemeProvider>
+      <AntApp>
+        <ThemeProvider theme={createTheme(token)}>
+          <BrowserRouter>
+            <Layout>
+              <Router />
+            </Layout>
+          </BrowserRouter>
+        </ThemeProvider>
+      </AntApp>
     </ConfigProvider>
   );
 };

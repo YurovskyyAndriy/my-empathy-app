@@ -74,17 +74,21 @@ const AnalysisSection = styled.div`
 
 const MessageBlock = styled.div`
   position: relative;
-  margin-bottom: 24px;
-  padding: 16px;
-  background: ${({ theme }) => theme.colorBgElevated};
-  border-radius: 8px;
-  border: 1px solid ${({ theme }) => theme.colorBorderSecondary};
+  background: ${({ theme }) => theme.colorFillQuaternary};
+  border-radius: ${({ theme }) => theme.borderRadiusLG}px;
+  padding: ${({ theme }) => theme.padding * 2}px;
+  padding-right: ${({ theme }) => theme.padding * 5}px;
+  margin-bottom: ${({ theme }) => theme.margin}px;
+
+  .ant-typography {
+    margin-bottom: 0;
+  }
 `;
 
 const CopyButton = styled(Button)`
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: ${({ theme }) => theme.padding}px;
+  right: ${({ theme }) => theme.padding}px;
   opacity: 0.6;
   transition: opacity 0.3s;
 
@@ -194,9 +198,9 @@ const AnalysisResults: FC<AnalysisResultsProps> = ({ message, onAskAgain }) => {
         // Self Awareness
         addStyledText('', 'Self Awareness', { fontSize: 16, isBold: true, isTitle: true, color: '#1677ff' });
         addStyledText(analysis.self_awareness.emotional_background, 'Emotional Background:', { color: '#faad14' });
+        addStyledText(analysis.self_awareness.step_back_analysis, 'Step Back Analysis:', { color: '#1890ff' });
         addStyledText(analysis.self_awareness.present_elements, 'Present Elements:', { color: '#52c41a' });
         addStyledText(analysis.self_awareness.missing_elements, 'Missing Elements:', { color: '#ff4d4f' });
-        addStyledText(analysis.self_awareness.step_back_analysis, 'Step Back Analysis:', { color: '#1890ff' });
 
         // Self Regulation
         addStyledText('', 'Self Regulation', { fontSize: 16, isBold: true, isTitle: true, color: '#1677ff' });
@@ -291,6 +295,11 @@ const AnalysisResults: FC<AnalysisResultsProps> = ({ message, onAskAgain }) => {
               <BulbOutlined style={{ color: '#faad14' }} />
             )}
             {renderAnalysisItem(
+              'Step Back Analysis',
+              analysis.self_awareness.step_back_analysis,
+              <ThunderboltOutlined style={{ color: '#1890ff' }} />
+            )}
+            {renderAnalysisItem(
               'Present Elements',
               analysis.self_awareness.present_elements,
               <CheckCircleOutlined style={{ color: '#52c41a' }} />
@@ -299,11 +308,6 @@ const AnalysisResults: FC<AnalysisResultsProps> = ({ message, onAskAgain }) => {
               'Missing Elements',
               analysis.self_awareness.missing_elements,
               <WarningOutlined style={{ color: '#ff4d4f' }} />
-            )}
-            {renderAnalysisItem(
-              'Step Back Analysis',
-              analysis.self_awareness.step_back_analysis,
-              <ThunderboltOutlined style={{ color: '#1890ff' }} />
             )}
           </Card>
 

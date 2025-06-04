@@ -2,6 +2,7 @@ import random
 from typing import Optional, Dict, Any
 import openai
 import weaviate
+import httpx
 from app.config.settings import Settings
 from app.models.api import (
     EmpathyResponse, 
@@ -23,11 +24,8 @@ class MessageProcessor:
         self.settings = settings
         self.openai_client = openai.OpenAI(api_key=settings.openai_api_key)
         try:
-            self.vector_client = weaviate.WeaviateClient(
-                connection_params=weaviate.connect.ConnectionParams.from_url(
-                    url=settings.vector_db_url,
-                    grpc_port=50051  # Default gRPC port for Weaviate
-                )
+            self.vector_client = weaviate.Client(
+                url=settings.vector_db_url
             )
         except Exception as e:
             print(f"Failed to initialize Weaviate client: {e}")
@@ -158,30 +156,6 @@ class MessageProcessor:
             print(f"Error processing message: {str(e)}")
             raise
 
-    async def transcribe_audio(self, audio_data: bytes) -> str:
-        """Transcribe audio using Whisper"""
-        try:
-            # Save audio data to temporary file
-            temp_file = "temp_audio.wav"
-            with open(temp_file, "wb") as f:
-                f.write(audio_data)
-
-            # Transcribe using Whisper
-            with open(temp_file, "rb") as audio_file:
-                transcription = self.openai_client.audio.transcriptions.create(
-                    file=audio_file,
-                    model="whisper-1"
-                )
-
-            # Clean up
-            import os
-            os.remove(temp_file)
-
-            return transcription.text
-        except Exception as e:
-            print(f"Error in transcribe_audio: {e}")
-            raise
-
     async def store_good_message(self, message: str, response: EmpathyResponse) -> StoreMessageResponse:
         """Store a good message-response pair in the vector database if similar doesn't exist"""
         try:
@@ -268,11 +242,7 @@ class MessageProcessor:
         )
         return response.data[0].embedding
 
-    async def process_feedback(self, message_id: str, liked: bool):
+    async def process_feedback(self, message_id: str, liked: bool) -> None:
         """Process feedback for a message"""
-        try:
-            # TODO: Implement feedback processing
-            pass
-        except Exception as e:
-            print(f"Error processing feedback: {e}")
-            raise 
+        # Store feedback in vector store
+        await self.vector_store.store_feedback(message_id, liked) 

@@ -28,8 +28,8 @@ const Instructions = () => {
           direction="vertical"
           items={[
             {
-              title: 'Navigate to Chat',
-              description: 'Click on the "Chat" tab in the navigation menu.',
+              title: 'Navigate to Analyze',
+              description: 'Click on the "Analyze" tab in the navigation menu.',
               icon: <MessageOutlined />,
             },
             {

@@ -1,8 +1,8 @@
-import React from "react";
+import { type FC } from 'react';
 import { Typography, Button } from "antd";
 import { useNavigate } from "react-router-dom";
 
-const LandingPage = () => {
+const LandingPage: FC = () => {
     const navigate = useNavigate();
 
     return (

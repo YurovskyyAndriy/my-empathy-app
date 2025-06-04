@@ -1,0 +1,17 @@
+export {
+  MessageOutlined,
+  HomeOutlined,
+  ReadOutlined,
+  FileTextOutlined,
+  SendOutlined,
+  AudioOutlined,
+  UserOutlined,
+  LoadingOutlined,
+  CloseOutlined,
+  MenuOutlined,
+  YoutubeOutlined,
+  TeamOutlined,
+  GithubOutlined,
+  LinkedinOutlined,
+  GoogleOutlined,
+} from '@ant-design/icons'; 

@@ -1,75 +1,91 @@
-import { Button, Input, Space, Typography } from "antd";
-import { useState } from "react";
+import { type FC, useState } from 'react';
+import { Form, Input, Button, Card, Space, Typography } from 'antd';
+import styled from 'styled-components';
+import { SendOutlined } from '../styles/icons';
+import AudioRecorder from './AudioRecorder';
 
-type Props = {
-    mode: "edit" | "analyze";
-};
+const { TextArea } = Input;
+const { Text } = Typography;
 
-const MessageForm = ({ mode }: Props) => {
-    const [text, setText] = useState("");
-    const [output, setOutput] = useState("");
-    const [listening, setListening] = useState(false);
+const FormContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
 
-    const startListening = () => {
-        if (!("webkitSpeechRecognition" in window)) {
-            alert("Speech recognition is not supported in this browser.");
-            return;
-        }
+const StyledCard = styled(Card)`
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+`;
 
-        const recognition = new (window as any).webkitSpeechRecognition();
-        recognition.lang = "en-US";
-        recognition.continuous = false;
-        recognition.interimResults = false;
+const ResultText = styled(Text)`
+  white-space: pre-wrap;
+`;
 
-        recognition.onresult = (event: any) => {
-            setText(event.results[0][0].transcript);
-            setListening(false);
-        };
+interface MessageFormProps {
+  onSubmit?: (text: string) => void;
+}
 
-        recognition.onerror = () => {
-            setListening(false);
-        };
+const MessageForm: FC<MessageFormProps> = ({ onSubmit }) => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
 
-        recognition.onend = () => setListening(false);
+  const handleSubmit = async (values: { message: string }) => {
+    if (!values.message.trim()) return;
 
-        recognition.start();
-        setListening(true);
-    };
+    setLoading(true);
+    try {
+      // Here would be your API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setResult('This is a simulated analysis result.');
+      if (onSubmit) {
+        onSubmit(values.message);
+      }
+      form.resetFields();
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const analyze = async () => {
-        const res = await fetch("/api/analyze", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text, mode }),
-        });
+  const handleAudioTranscription = (text: string) => {
+    form.setFieldsValue({ message: text });
+  };
 
-        const data = await res.json();
-        setOutput(data.result || "No result");
-    };
+  return (
+    <FormContainer>
+      <Form form={form} onFinish={handleSubmit} layout="vertical">
+        <Form.Item
+          name="message"
+          rules={[{ required: true, message: 'Please enter your message' }]}
+        >
+          <TextArea
+            placeholder="Type your message here..."
+            autoSize={{ minRows: 3, maxRows: 6 }}
+            disabled={loading}
+          />
+        </Form.Item>
 
-    return (
-        <Space direction="vertical" style={{ width: "100%" }}>
-            <Input.TextArea
-                rows={4}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Type your message or use voice"
-            />
-            <Space>
-                <Button onClick={startListening} loading={listening}>
-                    {listening ? "Listening..." : "Voice Input"}
-                </Button>
-                <Button type="primary" onClick={analyze}>
-                    Analyze
-                </Button>
-            </Space>
-            {output && (
-                <Typography.Paragraph style={{ marginTop: "1rem" }}>
-                    <strong>Result:</strong> {output}
-                </Typography.Paragraph>
-            )}
+        <Space>
+          <Button
+            type="primary"
+            htmlType="submit"
+            icon={<SendOutlined />}
+            loading={loading}
+          >
+            Analyze
+          </Button>
+          <AudioRecorder onTranscription={handleAudioTranscription} />
         </Space>
-    );
+      </Form>
+
+      {result && (
+        <StyledCard title="Analysis Result" size="small">
+          <ResultText>{result}</ResultText>
+        </StyledCard>
+      )}
+    </FormContainer>
+  );
 };
 
 export default MessageForm;

@@ -19,6 +19,10 @@ services:
     depends_on:
       - vector-store
       - speech-service
+    volumes:
+      - ./backend-node:/app
+      - /app/node_modules
+    command: npm run dev
 
   backend-python:
     build:
@@ -29,20 +33,23 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    volumes:
+      - ./backend-python:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn app.main:app --host 0.0.0.0 --reload
 
   frontend:
     build:
       context: ./frontend
-    container_name: frontend
     ports:
-      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
-    env_file:
-      - .env
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
     environment:
-      - NODE_ENV=production
-      - FRONTEND_PORT=${FRONTEND_PORT}
-      - VITE_BACKEND_URL=http://backend-node:4000
-    restart: unless-stopped
+      - NODE_ENV=development
+    command: npm run dev -- --host
 
   speech-service:
     build:
@@ -53,6 +60,11 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    volumes:
+      - ./speech-service:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: python main.py
 
   vector-store:
     image: semitechnologies/weaviate:latest

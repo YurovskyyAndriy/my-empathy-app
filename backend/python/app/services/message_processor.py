@@ -110,11 +110,17 @@ class MessageProcessor:
         
     def _detect_language(self, text: str) -> str:
         """
-        Simple language detection based on character set.
-        Returns 'ru' for Russian, 'en' for English
+        Language detection based on character set and specific Ukrainian characters.
+        Returns:
+        - 'uk' for Ukrainian
+        - 'ru' for Russian
+        - 'en' for English
         """
+        # Check for Ukrainian specific characters
+        if bool(re.search('[іїєґ]', text.lower())):
+            return 'uk'
         # Check if text contains Cyrillic characters
-        if bool(re.search('[а-яА-Я]', text)):
+        elif bool(re.search('[а-яА-Я]', text)):
             return 'ru'
         return 'en'
         

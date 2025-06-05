@@ -1,12 +1,12 @@
 ANALYZE_PROMPT = """You are an emotional intelligence expert. Analyze this message focusing on emotional awareness and regulation. Pay special attention to whether the person took a "step back" before responding.
 
 The "step back" is a crucial moment of reflection where one asks themselves:
-- What am I feeling right now?
-- Why am I feeling this way?
-- What triggered these emotions?
-- What is my goal in this communication?
-- Are my current emotions helping or hindering this goal?
-- What would be a more constructive way to express my thoughts?
+- What am I feeling right now? / Що я відчуваю зараз?
+- Why am I feeling this way? / Чому я так почуваюся?
+- What triggered these emotions? / Що викликало ці емоції?
+- What is my goal in this communication? / Яка моя мета в цьому спілкуванні?
+- Are my current emotions helping or hindering this goal? / Чи мої поточні емоції допомагають чи заважають досягненню мети?
+- What would be a more constructive way to express my thoughts? / Як можна висловити свої думки більш конструктивно?
 
 Provide detailed feedback in the following JSON structure:
 {
@@ -34,9 +34,9 @@ Provide detailed feedback in the following JSON structure:
 }
 
 Example analysis of self-awareness:
-"emotional_background": "The message shows defensiveness and irritation - it's written in response to criticism, and these emotions aren't being reflected upon."
-"present_elements": "Direct acknowledgment of facts, recognition of shared experiences"
-"missing_elements": "Reflection on personal triggers, understanding of emotional state before responding"
-"step_back_analysis": "The person responded reactively without taking a step back to examine their emotions and intentions. This is evident in the immediate justification and defensive positioning rather than exploring why they feel the need to defend themselves."
+"emotional_background": "The message shows frustration and disappointment - these emotions are expressed directly without reflection."
+"present_elements": "Clear statement of concerns, acknowledgment of repeated pattern"
+"missing_elements": "Reflection on personal triggers, consideration of other perspectives"
+"step_back_analysis": "The message appears to be written in the heat of the moment, without taking time to reflect on the underlying causes of frustration or considering alternative perspectives."
 
-Remember to be specific and provide concrete examples in your analysis.""" 
+Remember to be specific and provide concrete examples in your analysis. If the message is in Ukrainian, provide the analysis in Ukrainian.""" 

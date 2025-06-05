@@ -6,6 +6,35 @@ MyEmpathy - це інноваційна система, розроблена д�
 
 ## 🏗 Архітектура системи
 
+### Діаграма векторизації та пошуку
+
+```mermaid
+flowchart TD
+    A[Вхідне повідомлення] --> B[text2vec-transformers]
+    B --> C[Векторне представлення]
+    C --> D[Weaviate]
+    D --> E{Пошук схожих<br/>повідомлень}
+    E -->|Знайдено| F[Повернення<br/>збереженої відповіді]
+    E -->|Не знайдено| G[Запит до GPT]
+    G --> H[Нова відповідь]
+    H --> I[Збереження в Weaviate]
+    
+    subgraph Векторизація
+        B
+        C
+    end
+    
+    subgraph Векторна база даних
+        D
+        E
+    end
+    
+    subgraph GPT обробка
+        G
+        H
+    end
+```
+
 ### Діаграма обробки запиту
 
 ```mermaid
@@ -14,6 +43,7 @@ sequenceDiagram
     participant Frontend
     participant Backend
     participant VectorDB
+    participant T2VTransformers
     participant OpenAI
     participant STT
     
@@ -27,7 +57,9 @@ sequenceDiagram
     Frontend->>Backend: POST /api/analyzeMessage
     
     rect rgb(200, 220, 255)
-        note over Backend,VectorDB: Етап 1: Пошук у векторній базі
+        note over Backend,VectorDB: Етап 1: Векторизація та пошук
+        Backend->>T2VTransformers: Створення векторного<br/>представлення
+        T2VTransformers-->>Backend: Вектор повідомлення
         Backend->>VectorDB: Пошук схожих повідомлень<br/>(поріг: 0.95)
         VectorDB-->>Backend: Результат пошуку
     end
@@ -39,6 +71,8 @@ sequenceDiagram
             note over Backend,OpenAI: Етап 2: Запит до GPT
             Backend->>OpenAI: Запит аналізу
             OpenAI-->>Backend: Відповідь GPT
+            Backend->>T2VTransformers: Векторизація нової відповіді
+            T2VTransformers-->>Backend: Вектор відповіді
             Backend->>VectorDB: Збереження нової відповіді
         end
         Backend-->>Frontend: Повернення нової відповіді
@@ -60,28 +94,27 @@ sequenceDiagram
 
 ### Детальний опис процесу
 
-1. **Обробка вхідного повідомлення**
-   - Сервіс: `message-processor` (frontend/src/services/MessageProcessor)
-     - Валідація вхідних даних
-     - Нормалізація тексту
-     - Визначення мови через Azure Cognitive Services
-   - API Gateway: `api-gateway` (backend/gateway)
-     - Маршрутизація запитів
-     - Балансування навантаження
-     - Логування запитів
-   - Сервіс: `speech-service` (speech-service)
-     - Транскрибація голосових повідомлень через локальну Whisper модель
-     - Обробка аудіопотоку в реальному часі
-     - Підтримка різних мов введення
-     - Оптимізація використання GPU/CPU
+1. **Векторизація повідомлень (text2vec-transformers)**
+   - Модель: `text2vec-transformers`
+     - Багатомовна підтримка (українська, російська, англійська)
+     - Оптимізована для семантичного пошуку
+     - Розмір векторів: 768 вимірів
+   - Конфігурація:
+     - Векторизація повного тексту
+     - Нормалізація векторів
+     - Кешування векторних представлень
+   - Особливості:
+     - Швидка векторизація (GPU-прискорення)
+     - Ефективне використання пам'яті
+     - Автоматичне масштабування
 
 2. **Пошук у векторній базі даних**
    - Сервіс: `vector-search` (backend/services/vector-search)
-     - Генерація ембеддінгів через SentenceTransformers
-     - Взаємодія з Weaviate
-     - Кешування популярних запитів
+     - Взаємодія з text2vec-transformers
+     - Оптимізація запитів до Weaviate
+     - Кешування популярних векторів
    - База даних: `weaviate-db` (deployments/weaviate)
-     - Зберігання векторів
+     - Зберігання векторних представлень
      - Конфігурація індексів
      - Налаштування реплікації
 
@@ -208,6 +241,7 @@ sequenceDiagram
 ### Backend
 - Python + FastAPI
 - OpenAI API для GPT-3.5
+- text2vec-transformers для векторизації
 - Weaviate для векторної бази даних
 - Whisper API для розпізнавання мовлення
 
@@ -330,16 +364,13 @@ docker-compose ps
 NODE_ENV=development
 FRONTEND_PORT=3000
 
-# Speech-to-Text settings
-WHISPER_MODEL_SIZE=base # або tiny, small, medium, large
-WHISPER_DEVICE=cuda # або cpu
-WHISPER_HOST=speech-service
-WHISPER_PORT=8090
-AUDIO_CACHE_ENABLED=true
-AUDIO_CACHE_TTL=3600
-STT_SUPPORTED_LANGUAGES=uk,en,pl
-WHISPER_BATCH_SIZE=16
-WHISPER_COMPUTE_TYPE=float16 # або float32 для CPU
+# Vector Store Settings
+T2V_TRANSFORMERS_HOST=t2v-transformers
+T2V_TRANSFORMERS_PORT=8080
+T2V_BATCH_SIZE=32
+T2V_MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2
+T2V_MAX_LENGTH=512
+T2V_COMPUTE_TYPE=float16 # або float32 для CPU
 
 # Weaviate settings
 WEAVIATE_HOST=vector-store
@@ -349,6 +380,39 @@ VECTOR_STORE_PORT=8082
 
 # Повний список змінних та їх опис дивіться в .env.example
 ```
+
+### Налаштування text2vec-transformers
+
+Для оптимальної роботи text2vec-transformers:
+
+1. **Вимоги до системи:**
+   - NVIDIA GPU з CUDA 11.x (рекомендовано)
+   - Мінімум 8 ГБ відеопам'яті
+   - 16+ ГБ оперативної пам'яті
+
+2. **Конфігурація моделі:**
+   ```yaml
+   t2v-transformers:
+     image: semitechnologies/transformers-inference:sentence-transformers-all-MiniLM-L6-v2
+     environment:
+       - ENABLE_CUDA=1
+       - NVIDIA_VISIBLE_DEVICES=all
+     deploy:
+       resources:
+         reservations:
+           devices:
+             - capabilities: [gpu]
+   ```
+
+3. **Healthcheck налаштування:**
+   ```yaml
+   healthcheck:
+     test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+     interval: 30s
+     timeout: 10s
+     retries: 3
+     start_period: 60s
+   ```
 
 ### Налаштування для розробки
 

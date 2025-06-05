@@ -19,5 +19,7 @@ def get_prompt(prompt_type: PromptType, lang: str = "en") -> str:
     
     if lang == "ru":
         prompt += "\n\nIMPORTANT: Respond in Russian (на русском языке) as the input message is in Russian."
+    elif lang == "uk":
+        prompt += "\n\nIMPORTANT: Respond in Ukrainian (українською мовою) as the input message is in Ukrainian."
     
     return prompt 

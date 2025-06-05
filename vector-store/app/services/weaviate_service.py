@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.models.schemas import VectorResponse, StoreRequest
 import logging
 import uuid
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -62,30 +63,36 @@ class WeaviateService:
                         }
                     },
                     {
-                        "name": "response",
-                        "dataType": ["object"],
-                        "properties": [
-                            {
-                                "name": "analysis",
-                                "dataType": ["object"]
-                            },
-                            {
-                                "name": "long_version",
-                                "dataType": ["text"]
-                            },
-                            {
-                                "name": "short_version",
-                                "dataType": ["text"]
-                            },
-                            {
-                                "name": "id",
-                                "dataType": ["text"]
-                            },
-                            {
-                                "name": "certainty",
-                                "dataType": ["number"]
+                        "name": "analysis_json",
+                        "dataType": ["text"]
+                    },
+                    {
+                        "name": "long_version",
+                        "dataType": ["text"],
+                        "moduleConfig": {
+                            "text2vec-transformers": {
+                                "skip": False,
+                                "vectorizePropertyName": False
                             }
-                        ]
+                        }
+                    },
+                    {
+                        "name": "short_version",
+                        "dataType": ["text"],
+                        "moduleConfig": {
+                            "text2vec-transformers": {
+                                "skip": False,
+                                "vectorizePropertyName": False
+                            }
+                        }
+                    },
+                    {
+                        "name": "response_id",
+                        "dataType": ["text"]
+                    },
+                    {
+                        "name": "certainty",
+                        "dataType": ["number"]
                     },
                     {
                         "name": "feedback",
@@ -110,15 +117,19 @@ class WeaviateService:
                 self.client.query
                 .get(settings.WEAVIATE_CLASS_NAME, [
                     "message",
-                    "feedback",
-                    "response { analysis { empathy { missing_elements potential_additions understanding_examples } self_awareness { emotional_background missing_elements present_elements step_back_analysis } self_regulation { alternative_phrases current_phrasing improvement_examples } social_skills { current_impact examples improvements } } long_version short_version certainty }"
+                    "analysis_json",
+                    "long_version",
+                    "short_version",
+                    "response_id",
+                    "certainty",
+                    "feedback"
                 ])
-                .with_bm25(
-                    query=text,
-                    properties=["message"]
-                )
+                .with_near_text({
+                    "concepts": [text],
+                    "properties": ["message", "long_version", "short_version"]
+                })
                 .with_limit(limit)
-                .with_additional(["id", "score"])
+                .with_additional(["id", "distance"])
                 .do()
             )
             
@@ -129,19 +140,29 @@ class WeaviateService:
                 objects = result["data"]["Get"][settings.WEAVIATE_CLASS_NAME]
                 logger.info(f"Found {len(objects)} objects")
                 for item in objects:
-                    score_str = item.get("_additional", {}).get("score", "0")
-                    try:
-                        score = float(score_str)
-                    except (ValueError, TypeError):
-                        logger.warning(f"Invalid score value: {score_str}")
-                        score = 0
+                    # Convert distance to score (distance is inverse of similarity)
+                    distance = item.get("_additional", {}).get("distance", 1.0)
+                    score = 1.0 - distance if distance <= 1.0 else 0.0
                     
                     # Only include results with score above threshold
                     if score >= settings.VECTOR_DB_CONFIDENCE_THRESHOLD:
-                        response_obj = item.get("response", {})
+                        try:
+                            analysis = json.loads(item.get("analysis_json", "{}"))
+                        except json.JSONDecodeError:
+                            logger.error("Failed to decode analysis JSON")
+                            analysis = {}
+                        
+                        response_obj = {
+                            "analysis": analysis,
+                            "long_version": item.get("long_version", ""),
+                            "short_version": item.get("short_version", ""),
+                            "id": item.get("response_id", ""),
+                            "certainty": item.get("certainty", 0.0)
+                        }
+                        
                         response_data = {
-                            "id": item.get("_additional", {}).get("id"),  # Add ID at the root level
-                            "message": item.get("message"),
+                            "id": item.get("_additional", {}).get("id"),
+                            "message": item.get("message", ""),
                             "response": response_obj,
                             "feedback": item.get("feedback", "neutral"),
                             "score": score
@@ -162,9 +183,14 @@ class WeaviateService:
             # Generate UUID for the new object
             new_id = str(uuid.uuid4())
             
+            # Flatten the response object
             properties = {
                 "message": request.message,
-                "response": request.response,
+                "analysis_json": json.dumps(request.response.get("analysis", {})),
+                "long_version": request.response.get("long_version", ""),
+                "short_version": request.response.get("short_version", ""),
+                "response_id": request.response.get("id", ""),
+                "certainty": request.response.get("certainty", 0.0),
                 "feedback": "neutral",
                 "_additional": {
                     "id": new_id
@@ -180,8 +206,24 @@ class WeaviateService:
             
             if not result:
                 raise Exception("Failed to store object in Weaviate")
+            
+            # Reconstruct response object for return
+            response_obj = {
+                "analysis": json.loads(properties["analysis_json"]),
+                "long_version": properties["long_version"],
+                "short_version": properties["short_version"],
+                "id": properties["response_id"],
+                "certainty": properties["certainty"]
+            }
+            
+            return_data = {
+                "id": new_id,
+                "message": properties["message"],
+                "response": response_obj,
+                "feedback": properties["feedback"]
+            }
                 
-            return VectorResponse(id=new_id, **properties)
+            return VectorResponse(**return_data)
         except Exception as e:
             logger.error(f"Error storing: {e}")
             raise

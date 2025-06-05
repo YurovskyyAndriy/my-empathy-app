@@ -4,6 +4,13 @@ Your task is simple - rewrite the message in two versions:
 1. long_version: A polite and empathetic version that keeps all the points
 2. short_version: A shorter version that keeps the main message
 
+When rewriting, consider:
+- Acknowledging emotions / Визнання емоцій
+- Using constructive language / Використання конструктивної мови
+- Showing understanding / Демонстрація розуміння
+- Offering solutions / Пропонування рішень
+- Being respectful / Збереження поваги
+
 Return ONLY the rewritten messages in this JSON format:
 {
     "long_version": string,  // The rewritten message
@@ -15,4 +22,6 @@ Input: "This code is terrible!"
 Output: {
     "long_version": "I've been reviewing the code and noticed some areas that could be improved. Would you be open to discussing potential refactoring approaches?",
     "short_version": "Let's discuss how we can improve the code."
-}""" 
+}
+
+If the input message is in Ukrainian.""" 

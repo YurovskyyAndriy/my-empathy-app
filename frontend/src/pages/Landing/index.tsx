@@ -3,8 +3,8 @@ import { Typography, Row, Col, Button, Space, Card, theme } from 'antd';
 import { Link } from 'react-router-dom';
 import {
   MessageOutlined,
-  ReadOutlined,
-  TeamOutlined,
+  RobotOutlined,
+  HeartOutlined,
 } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
@@ -16,37 +16,37 @@ const Landing: FC = () => {
   const features = [
     {
       icon: <MessageOutlined style={{ fontSize: token.fontSizeHeading3, color: token.colorPrimary }} />,
-      title: 'Real-time Analysis',
-      description: 'Get instant feedback on the emotional content of your messages.',
+      title: 'Emotional Analysis',
+      description: 'Analyze and enhance the emotional content of your messages using AI.',
     },
     {
-      icon: <ReadOutlined style={{ fontSize: token.fontSizeHeading3, color: token.colorPrimary }} />,
-      title: 'Learning Resources',
-      description: 'Access comprehensive guides on empathetic communication.',
+      icon: <RobotOutlined style={{ fontSize: token.fontSizeHeading3, color: token.colorPrimary }} />,
+      title: 'Vector Search',
+      description: 'Smart similar message search for fast and relevant responses.',
     },
     {
-      icon: <TeamOutlined style={{ fontSize: token.fontSizeHeading3, color: token.colorPrimary }} />,
-      title: 'Community Support',
-      description: 'Join a community dedicated to improving communication skills.',
+      icon: <HeartOutlined style={{ fontSize: token.fontSizeHeading3, color: token.colorPrimary }} />,
+      title: 'Feedback System',
+      description: 'Rating and feedback system for continuous response quality improvement.',
     },
   ];
 
   return (
     <Row style={{ padding: token.padding * 3, maxWidth: 1200, margin: '0 auto', width: '100%' }}>
       <Col span={24} style={{ textAlign: 'center', marginBottom: token.margin * 6 }}>
-        <Title>Welcome to Empathy App</Title>
+        <Title>MyEmpathy</Title>
         <Paragraph type="secondary" style={{ marginBottom: token.marginLG }}>
-          Enhance your communication with AI-powered emotional intelligence.
-          Our app helps you understand and improve the emotional impact of your messages.
+          An innovative system for enhancing the emotional content of messages.
+          Harness the power of AI to create more empathetic communication.
         </Paragraph>
         <Space size="large">
           <Link to="/analyze">
             <Button type="primary" size="large">
-              <Link to="/analyze">Start Analysis</Link>
+              Start Analysis
             </Button>
           </Link>
           <Link to="/instructions">
-            <Button size="large">Learn More</Button>
+            <Button size="large">Instructions</Button>
           </Link>
         </Space>
       </Col>

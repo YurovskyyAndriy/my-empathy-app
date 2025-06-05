@@ -1,8 +1,8 @@
 import { Typography, Card, Steps } from 'antd';
 import {
   MessageOutlined,
-  AudioOutlined,
-  SmileOutlined,
+  RobotOutlined,
+  HeartOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
@@ -16,10 +16,10 @@ const StyledCard = styled(Card)`
 const Instructions = () => {
   return (
     <>
-      <Title>How to Use the Empathy App</Title>
+      <Title>How to Use MyEmpathy</Title>
       <Paragraph>
-        Welcome to the Empathy App! This guide will help you understand how to use
-        our platform effectively to improve your communication skills.
+        Welcome to MyEmpathy! This guide will help you understand how to use
+        our platform to enhance the emotional content of your messages.
       </Paragraph>
 
       <StyledCard>
@@ -28,23 +28,23 @@ const Instructions = () => {
           direction="vertical"
           items={[
             {
-              title: 'Navigate to Analyze',
-              description: 'Click on the "Analyze" tab in the navigation menu.',
+              title: 'Enter Your Message',
+              description: 'Write the text you want to analyze.',
               icon: <MessageOutlined />,
             },
             {
-              title: 'Choose Input Method',
-              description: 'You can either type your message or use voice recording.',
-              icon: <AudioOutlined />,
+              title: 'Get Analysis',
+              description: 'System will analyze emotional content and suggest improvements.',
+              icon: <RobotOutlined />,
             },
             {
-              title: 'Receive Analysis',
-              description: 'Get instant feedback on the emotional content of your message.',
-              icon: <SmileOutlined />,
+              title: 'Rate the Result',
+              description: 'Rate the response to help improve system quality.',
+              icon: <HeartOutlined />,
             },
             {
-              title: 'Apply Suggestions',
-              description: 'Use the provided suggestions to improve your communication.',
+              title: 'Apply Recommendations',
+              description: 'Use the suggested improvements in your message.',
               icon: <CheckCircleOutlined />,
             },
           ]}
@@ -53,31 +53,32 @@ const Instructions = () => {
 
       <StyledCard>
         <Title level={3}>Features Overview</Title>
-        <Title level={4}>Text Input</Title>
+        <Title level={4}>Text Analysis</Title>
         <Paragraph>
           <ul>
-            <li>Type your message in the text area</li>
-            <li>Press Enter to send (Shift + Enter for new line)</li>
-            <li>Receive instant analysis and suggestions</li>
+            <li>Enter your message in the text field</li>
+            <li>System automatically detects the language</li>
+            <li>Get detailed emotional content analysis</li>
+            <li>Review improvement suggestions</li>
           </ul>
         </Paragraph>
 
-        <Title level={4}>Voice Input</Title>
+        <Title level={4}>Vector Search</Title>
         <Paragraph>
           <ul>
-            <li>Click the microphone icon to start recording</li>
-            <li>Speak clearly into your microphone</li>
-            <li>Click again to stop recording</li>
-            <li>Your message will be transcribed and analyzed</li>
+            <li>System searches for similar messages in the database</li>
+            <li>Uses 0.95 similarity threshold for accuracy</li>
+            <li>Stores successful responses for future use</li>
           </ul>
         </Paragraph>
 
-        <Title level={4}>Analysis Mode</Title>
+        <Title level={4}>Rating System</Title>
         <Paragraph>
           <ul>
-            <li>Toggle "Show Analysis" to view detailed emotional analysis</li>
-            <li>Understand the emotional impact of your messages</li>
-            <li>Get suggestions for more empathetic communication</li>
+            <li>Rate the usefulness of analysis and recommendations</li>
+            <li>Like adds +1 to response rating</li>
+            <li>Dislike subtracts -1 from rating</li>
+            <li>Low-quality responses are automatically removed</li>
           </ul>
         </Paragraph>
       </StyledCard>
@@ -86,11 +87,11 @@ const Instructions = () => {
         <Title level={3}>Tips for Better Results</Title>
         <Paragraph>
           <ul>
-            <li>Be clear and specific in your messages</li>
+            <li>Write clear and specific messages</li>
             <li>Use complete sentences for better analysis</li>
-            <li>Consider the context of your communication</li>
-            <li>Review the analysis and suggestions carefully</li>
-            <li>Practice regularly to improve your skills</li>
+            <li>Consider the context of communication</li>
+            <li>Experiment with different improvement options</li>
+            <li>Practice regularly to develop your skills</li>
           </ul>
         </Paragraph>
       </StyledCard>
@@ -99,11 +100,11 @@ const Instructions = () => {
         <Title level={3}>Need Help?</Title>
         <Paragraph>
           If you have any questions or need assistance, please refer to our
-          documentation or contact our support team.
+          documentation or contact support.
         </Paragraph>
         <Text type="secondary">
-          Remember: The goal is to improve your communication skills and build
-          better relationships through empathetic interaction.
+          Remember: Our goal is to help you improve the emotional content of
+          your communication and build better relationships through empathetic interaction.
         </Text>
       </Card>
     </>

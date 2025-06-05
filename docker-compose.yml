@@ -65,7 +65,8 @@ services:
       CLUSTER_HOSTNAME: 'node1'
       GRPC_PORT: 50051
     depends_on:
-      - t2v-transformers
+      t2v-transformers:
+        condition: service_healthy
 
   vector-store-api:
     build:
@@ -90,6 +91,12 @@ services:
     environment:
       ENABLE_CUDA: '0'
       NVIDIA_VISIBLE_DEVICES: 'all'
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/.well-known/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 networks:
   default:

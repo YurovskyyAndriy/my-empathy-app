@@ -95,9 +95,7 @@ const Analyze: FC<AnalyzeProps> = () => {
 
   const handleAskAgain = () => {
     setShowResults(false);
-    if (currentMessage) {
-      handleSend(currentMessage.content);
-    }
+    setCurrentMessage(null);
   };
 
   return (

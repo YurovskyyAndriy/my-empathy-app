@@ -31,9 +31,14 @@ export interface FullAnalysis {
 }
 
 export interface EmpathyResponse {
+  id?: string;
   analysis: FullAnalysis;
   long_version: string;
   short_version: string;
+  score?: string;
+  additional?: {
+    id: string;
+  };
 }
 
 export interface Message {

@@ -16,16 +16,19 @@ TEST_ENV = {
     # Database
     "DATABASE_URL": "sqlite:///./backend/test.db",
     
-    # Vector Store
-    "VECTOR_STORE_PATH": "./backend/test_vector_store",
-    "EMBEDDING_MODEL": "all-MiniLM-L6-v2",
+    # Vector DB (Weaviate)
     "VECTOR_DB_URL": "http://localhost:8080",
+    "VECTOR_DB_CONFIDENCE_THRESHOLD": "0.85",
+    
+    # AB Testing
+    "AB_TEST_OPENAI_WEIGHT": "70",
+    "AB_TEST_VECTOR_DB_WEIGHT": "30",
+    "AB_TEST_LOCAL_LLM_WEIGHT": "0",
     
     # Frontend
     "NODE_ENV": "test",
     "FRONTEND_PORT": "3000",
     
     # Additional Services
-    "MCP_ENABLED": "true",
     "WHISPER_HOST": "http://localhost:5005"
 } 

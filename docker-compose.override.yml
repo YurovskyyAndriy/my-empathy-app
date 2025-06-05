@@ -5,8 +5,12 @@ services:
     volumes:
       - ./backend/python:/app
     environment:
-      - ENVIRONMENT=development
       - PYTHONUNBUFFERED=1
+      - VECTOR_DB_URL=${VECTOR_DB_URL:-http://weaviate-db:8080}
+      - AB_TEST_OPENAI_WEIGHT=0
+      - AB_TEST_VECTOR_DB_WEIGHT=100
+      - AB_TEST_LOCAL_LLM_WEIGHT=0
+      - VECTOR_DB_CONFIDENCE_THRESHOLD=${VECTOR_DB_CONFIDENCE_THRESHOLD:-0.95}
     command: uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-4000} --reload
 
   frontend:
@@ -14,17 +18,20 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=development
       - VITE_BACKEND_URL=http://localhost:${BACKEND_PORT:-4000}
+      - VITE_VECTOR_STORE_URL=http://localhost:8082
     command: npm run dev -- --host
 
   speech-service:
     volumes:
       - ./speech-service:/app
     environment:
-      - ENVIRONMENT=development
       - PYTHONUNBUFFERED=1
+    command: python main.py
 
-  vector-store:
+  vector-store-api:
     environment:
-      - ENVIRONMENT=development 
+      - PYTHONUNBUFFERED=1
+      - VECTOR_DB_URL=${VECTOR_DB_URL:-http://weaviate-db:8080}
+      - VECTOR_DB_CONFIDENCE_THRESHOLD=${VECTOR_DB_CONFIDENCE_THRESHOLD:-0.95}
+    command: uvicorn app.main:app --host 0.0.0.0 --port ${VECTOR_STORE_PORT:-8082} --reload 

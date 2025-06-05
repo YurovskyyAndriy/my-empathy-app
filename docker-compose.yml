@@ -3,31 +3,24 @@ version: '3.9'
 services:
   backend:
     build:
-      context: ./backend/python
+      context: ./backend
     container_name: backend-python
     ports:
       - "${BACKEND_PORT:-4000}:${BACKEND_PORT:-4000}"
     env_file:
       - .env
     environment:
-      - PYTHONUNBUFFERED=1
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4-turbo-preview}
-      - VECTOR_DB_URL=${VECTOR_DB_URL:-http://vector-store:8080}
-      - VECTOR_DB_CONFIDENCE_THRESHOLD=${VECTOR_DB_CONFIDENCE_THRESHOLD:-0.85}
-      - AB_TEST_OPENAI_WEIGHT=${AB_TEST_OPENAI_WEIGHT:-100}
-      - AB_TEST_VECTOR_DB_WEIGHT=${AB_TEST_VECTOR_DB_WEIGHT:-0}
-      - AB_TEST_LOCAL_LLM_WEIGHT=${AB_TEST_LOCAL_LLM_WEIGHT:-0}
-      - DEFAULT_TEMPLATE_ID=${DEFAULT_TEMPLATE_ID:-ei-analysis}
-      - EI_SYSTEM_PROMPT=${EI_SYSTEM_PROMPT}
-      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - VECTOR_DB_URL=${VECTOR_DB_URL:-http://weaviate-db:8080}
+      - AB_TEST_OPENAI_WEIGHT=0
+      - AB_TEST_VECTOR_DB_WEIGHT=100
+      - AB_TEST_LOCAL_LLM_WEIGHT=0
+      - VECTOR_DB_CONFIDENCE_THRESHOLD=${VECTOR_DB_CONFIDENCE_THRESHOLD:-0.95}
     restart: unless-stopped
     depends_on:
-      - vector-store
+      - vector-store-api
       - speech-service
     volumes:
-      - ./backend/python:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port ${BACKEND_PORT:-4000} --reload
+      - ./backend:/app
 
   frontend:
     build:
@@ -38,9 +31,8 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - NODE_ENV=${ENVIRONMENT:-development}
       - BACKEND_URL=http://backend:${BACKEND_PORT:-4000}
-    command: npm run dev -- --host
+      - VITE_VECTOR_STORE_URL=http://localhost:8082
 
   speech-service:
     build:
@@ -53,25 +45,55 @@ services:
     restart: unless-stopped
     volumes:
       - ./speech-service:/app
-    environment:
-      - PYTHONUNBUFFERED=1
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-    command: python main.py
 
-  vector-store:
-    image: semitechnologies/weaviate:latest
-    container_name: vector-store
+  weaviate-db:
+    image: semitechnologies/weaviate:1.23.7
+    container_name: weaviate-db
     ports:
-      - "8080:8080"
+      - "${WEAVIATE_PORT:-8081}:8080"
+      - "50051:50051"
     restart: unless-stopped
+    volumes:
+      - weaviate_data:/var/lib/weaviate
     environment:
       QUERY_DEFAULTS_LIMIT: ${VECTOR_DB_QUERY_LIMIT:-25}
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      DEFAULT_VECTORIZER_MODULE: 'none'
-      ENABLE_MODULES: ''
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-transformers'
+      ENABLE_MODULES: 'text2vec-transformers'
+      TRANSFORMERS_INFERENCE_API: 'http://t2v-transformers:8080'
       CLUSTER_HOSTNAME: 'node1'
+      GRPC_PORT: 50051
+    depends_on:
+      - t2v-transformers
+
+  vector-store-api:
+    build:
+      context: ./vector-store
+    ports:
+      - "${VECTOR_STORE_PORT:-8082}:8082"
+    env_file:
+      - .env
+    environment:
+      - WEAVIATE_HOST=weaviate-db
+      - WEAVIATE_PORT=8080
+      - VECTOR_DB_URL=http://weaviate-db:8080
+      - VECTOR_DB_CONFIDENCE_THRESHOLD=${VECTOR_DB_CONFIDENCE_THRESHOLD:-0.95}
+    depends_on:
+      - weaviate-db
+    volumes:
+      - ./vector-store:/app
+
+  t2v-transformers:
+    image: semitechnologies/transformers-inference:sentence-transformers-paraphrase-multilingual-MiniLM-L12-v2
+    container_name: t2v-transformers
+    environment:
+      ENABLE_CUDA: '0'
+      NVIDIA_VISIBLE_DEVICES: 'all'
 
 networks:
   default:
     name: empathy-net
+
+volumes:
+  weaviate_data:

@@ -14,13 +14,6 @@ def test_project_root():
     assert PROJECT_ROOT.exists()
     assert (PROJECT_ROOT / "backend").exists()
 
-def test_vector_store_path():
-    """Test that vector store path is correctly configured"""
-    vector_store_path = Path(settings.VECTOR_STORE_PATH)
-    assert vector_store_path.exists()
-    assert vector_store_path.is_absolute()
-    assert str(vector_store_path).endswith("backend/test_vector_store")
-
 def test_database_url():
     """Test that database URL is correctly configured"""
     if settings.DATABASE_URL.startswith("sqlite:///"):
@@ -38,12 +31,28 @@ def test_required_env_variables():
     assert settings.ENVIRONMENT == TEST_ENV["ENVIRONMENT"]
     assert settings.OPENAI_API_KEY == TEST_ENV["OPENAI_API_KEY"]
     assert settings.SECRET_KEY == TEST_ENV["SECRET_KEY"]
-    assert settings.EMBEDDING_MODEL == TEST_ENV["EMBEDDING_MODEL"]
+
+def test_vector_db_settings():
+    """Test that vector DB settings are loaded correctly"""
+    assert settings.VECTOR_DB_URL == TEST_ENV["VECTOR_DB_URL"]
+    assert settings.VECTOR_DB_CONFIDENCE_THRESHOLD == float(TEST_ENV["VECTOR_DB_CONFIDENCE_THRESHOLD"])
+
+def test_ab_testing_settings():
+    """Test that AB testing weights are loaded correctly"""
+    assert settings.AB_TEST_OPENAI_WEIGHT == float(TEST_ENV["AB_TEST_OPENAI_WEIGHT"])
+    assert settings.AB_TEST_VECTOR_DB_WEIGHT == float(TEST_ENV["AB_TEST_VECTOR_DB_WEIGHT"])
+    assert settings.AB_TEST_LOCAL_LLM_WEIGHT == float(TEST_ENV["AB_TEST_LOCAL_LLM_WEIGHT"])
+    
+    # Test that weights sum up to 100
+    total_weight = (
+        settings.AB_TEST_OPENAI_WEIGHT +
+        settings.AB_TEST_VECTOR_DB_WEIGHT +
+        settings.AB_TEST_LOCAL_LLM_WEIGHT
+    )
+    assert total_weight == 100.0
 
 def test_optional_variables():
     """Test that optional variables are loaded correctly"""
     assert settings.NODE_ENV == TEST_ENV["NODE_ENV"]
     assert settings.FRONTEND_PORT == TEST_ENV["FRONTEND_PORT"]
-    assert settings.VECTOR_DB_URL == TEST_ENV["VECTOR_DB_URL"]
-    assert settings.MCP_ENABLED is True  # Converted from string 'true' to boolean True
     assert settings.WHISPER_HOST == TEST_ENV["WHISPER_HOST"] 

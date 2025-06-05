@@ -1,12 +1,24 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Dict, Any
 
 class MessageRequest(BaseModel):
     message: str
 
 class RewrittenMessage(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "long_version": "",
+                "short_version": "",
+                "additional": None
+            }
+        }
+    )
+
     long_version: str
     short_version: str
+    additional_data: Dict[str, Any] | None = Field(default=None, alias="additional")  # Additional data from Weaviate
 
 class SelfAwarenessAnalysis(BaseModel):
     emotional_background: str
@@ -36,9 +48,26 @@ class FullAnalysis(BaseModel):
     social_skills: SocialSkillsAnalysis
 
 class EmpathyResponse(BaseModel):
+    model_config = ConfigDict(
+        populate_by_name=True,
+        json_schema_extra={
+            "example": {
+                "id": None,
+                "analysis": None,
+                "long_version": "",
+                "short_version": "",
+                "score": None,
+                "additional": None
+            }
+        }
+    )
+
+    id: str | None = None
     analysis: FullAnalysis | None
     long_version: str
     short_version: str
+    score: str | None = None  # Score/certainty from vector store as string
+    additional_data: Dict[str, Any] | None = Field(default=None, alias="additional")  # Additional data from Weaviate
 
 class StoreMessageResponse(BaseModel):
     status: str

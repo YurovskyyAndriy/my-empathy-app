@@ -2,6 +2,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 from typing import Dict, Optional, List
 from os import getenv
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 DEFAULT_EI_PROMPT = """You are a helpful assistant that rewrites messages to be more empathetic.
 
@@ -51,13 +55,21 @@ Required JSON structure:
 }"""
 
 class Settings(BaseSettings):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        logger.debug(f"VECTOR_DB_CONFIDENCE_THRESHOLD from env: {getenv('VECTOR_DB_CONFIDENCE_THRESHOLD')}")
+        logger.debug(f"VECTOR_DB_CONFIDENCE_THRESHOLD in settings: {self.vector_db_confidence_threshold}")
+
     # OpenAI settings
     openai_api_key: str = Field(default=..., validation_alias='OPENAI_API_KEY')
     openai_model: str = Field(default='gpt-3.5-turbo', validation_alias='OPENAI_MODEL')
     
     # Vector DB settings
-    vector_db_url: str = Field(default='http://vector-store:8080', validation_alias='VECTOR_DB_URL')
-    vector_db_confidence_threshold: float = Field(default=0.85, validation_alias='VECTOR_DB_CONFIDENCE_THRESHOLD')
+    vector_db_url: str = Field(default='http://weaviate-db:8080', validation_alias='VECTOR_DB_URL')
+    vector_db_confidence_threshold: float = Field(
+        default=0.95,  # Increased from 0.3 to require much higher similarity
+        description="Confidence threshold for vector database matches"
+    )
     
     # AB Testing configuration
     ab_test_openai_weight: float = Field(default=100.0, validation_alias='AB_TEST_OPENAI_WEIGHT')
@@ -91,7 +103,7 @@ class Settings(BaseSettings):
         ]
     
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="../../../../.env",
         env_file_encoding='utf-8',
         case_sensitive=False
     ) 

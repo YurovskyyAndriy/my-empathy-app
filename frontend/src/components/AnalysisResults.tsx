@@ -1,7 +1,10 @@
-import { type FC } from 'react';
+import { type FC, useState, useEffect } from 'react';
 import { Card, Typography, Row, Col, Space, Button, Tooltip, message as messageApi } from 'antd';
 import {
   HeartOutlined,
+  HeartFilled,
+  DislikeOutlined,
+  DislikeFilled,
   BulbOutlined,
   ThunderboltOutlined,
   TeamOutlined,
@@ -14,8 +17,9 @@ import {
   RedoOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import type { Message } from '../types';
+import type { Message, EmpathyResponse } from '../types';
 import { jsPDF } from 'jspdf';
+import { sendFeedback } from '../api';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -103,15 +107,33 @@ const ActionButtons = styled.div`
   margin-top: 32px;
 `;
 
+const FeedbackButtons = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+`;
+
 interface AnalysisResultsProps {
   message: Message;
   onAskAgain?: () => void;
 }
 
 const AnalysisResults: FC<AnalysisResultsProps> = ({ message, onAskAgain }) => {
+  const [isLiked, setIsLiked] = useState<boolean | null>(null);
+  const [isSendingFeedback, setIsSendingFeedback] = useState(false);
+
   if (!message.response) return null;
 
-  const { analysis, long_version, short_version } = message.response;
+  const response = message.response as EmpathyResponse;
+  const { analysis, long_version, short_version } = response;
+
+  // Log score if available
+  useEffect(() => {
+    if (response.score !== undefined) {
+      console.log('Vector store match score:', response.score);
+    }
+  }, [response.score]);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -248,6 +270,41 @@ const AnalysisResults: FC<AnalysisResultsProps> = ({ message, onAskAgain }) => {
     }
   };
 
+  const handleFeedback = async (liked: boolean) => {
+    try {
+      if (!message.response) return;
+      
+      setIsSendingFeedback(true);
+      
+      // Get the message ID from the response
+      const messageId = message.response.additional?.id;
+      if (!messageId) {
+        console.error('No message ID found in response');
+        messageApi.error('Failed to send feedback: No message ID found');
+        return;
+      }
+
+      // Create a minimal EmpathyResponse for RewrittenMessage
+      const empathyResponse: Partial<EmpathyResponse> = {
+        id: messageId,
+        analysis: message.response.analysis,
+        long_version: message.response.long_version,
+        short_version: message.response.short_version,
+        additional: { id: messageId }
+      };
+
+      await sendFeedback(empathyResponse as EmpathyResponse, liked);
+
+      setIsLiked(liked);
+      messageApi.success(liked ? 'Thank you for your feedback!' : 'Thanks for letting us know!');
+    } catch (error) {
+      console.error('Error sending feedback:', error);
+      messageApi.error('Failed to send feedback');
+    } finally {
+      setIsSendingFeedback(false);
+    }
+  };
+
   const renderAnalysisItem = (title: string, content: string, icon: React.ReactNode) => (
     <div className="analysis-item">
       <Space direction="vertical" style={{ width: '100%' }}>
@@ -285,6 +342,39 @@ const AnalysisResults: FC<AnalysisResultsProps> = ({ message, onAskAgain }) => {
           </Col>
         </Row>
       </MessageSection>
+
+      {isLiked === null && (
+        <FeedbackButtons>
+          <Tooltip title="Like this response">
+            <Button
+              type="text"
+              icon={<HeartOutlined />}
+              onClick={() => handleFeedback(true)}
+              loading={isSendingFeedback}
+            >
+              Like
+            </Button>
+          </Tooltip>
+          <Tooltip title="Dislike this response">
+            <Button
+              type="text"
+              icon={<DislikeOutlined />}
+              onClick={() => handleFeedback(false)}
+              loading={isSendingFeedback}
+            >
+              Dislike
+            </Button>
+          </Tooltip>
+        </FeedbackButtons>
+      )}
+
+      {isLiked !== null && (
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <Text type="secondary">
+            {isLiked ? 'Thank you for your feedback! 👍' : 'Thanks for letting us know! 👎'}
+          </Text>
+        </div>
+      )}
 
       {analysis && (
         <AnalysisSection>

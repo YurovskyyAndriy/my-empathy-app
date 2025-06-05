@@ -31,14 +31,22 @@ export interface Analysis {
 }
 
 export interface EmpathyResponse {
-  analysis: Analysis;
+  id?: string;
+  analysis?: Analysis;
   long_version: string;
   short_version: string;
+  score?: number;  // Score/similarity from vector store
+  additional?: {
+    id: string;
+  };
 }
 
 export interface RewrittenMessage {
   long_version: string;
   short_version: string;
+  additional?: {
+    id: string;
+  };
 }
 
 export interface Message {
@@ -47,4 +55,15 @@ export interface Message {
   isUser: boolean;
   timestamp: number;
   response?: EmpathyResponse;
+}
+
+export interface FeedbackRequest {
+  message: string;
+  response: EmpathyResponse;
+  liked: boolean;
+}
+
+export interface FeedbackResponse {
+  status: string;
+  message: string;
 } 

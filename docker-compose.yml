@@ -33,6 +33,7 @@ services:
     environment:
       - BACKEND_URL=http://backend:${BACKEND_PORT:-4000}
       - VITE_VECTOR_STORE_URL=http://localhost:8082
+      - VITE_SPEECH_SERVICE_URL=http://localhost:5005
 
   speech-service:
     build:
@@ -43,6 +44,20 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     volumes:
       - ./speech-service:/app
 

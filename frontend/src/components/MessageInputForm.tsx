@@ -2,7 +2,7 @@ import { type FC, useState, useRef, type KeyboardEvent } from 'react';
 import { Form, Input, Button, Switch, Space, Card, message } from 'antd';
 import { SendOutlined, AudioOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
-import { API_URL } from '../config';
+import { API_URL, SPEECH_SERVICE_URL } from '../config';
 import AudioWaveform from './AudioWaveform';
 
 const { TextArea } = Input;
@@ -33,8 +33,6 @@ interface MessageInputFormProps {
   showAnalysis: boolean;
   onToggleAnalysis: (show: boolean) => void;
 }
-
-const SPEECH_SERVICE_URL = 'http://localhost:5005';
 
 const MessageInputForm: FC<MessageInputFormProps> = ({
   onSubmit,
@@ -89,30 +87,61 @@ const MessageInputForm: FC<MessageInputFormProps> = ({
         stream.getTracks().forEach(track => track.stop());
         
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        let hideMessage: (() => void) | undefined;
         
         try {
-          const hide = messageApi.loading('Transcribing speech...', 0);
+          // Show initial loading message
+          hideMessage = messageApi.loading({
+            content: 'Preparing audio for transcription...',
+            duration: 0
+          });
           
           const formData = new FormData();
           formData.append('file', audioBlob, 'audio.webm');
 
+          // Update loading message
+          hideMessage();
+          hideMessage = messageApi.loading({
+            content: 'Transcribing speech (this may take up to 30 seconds)...',
+            duration: 0
+          });
+
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 45000); // Increased timeout to 45 seconds
+
           const response = await fetch(`${SPEECH_SERVICE_URL}/transcribe`, {
             method: 'POST',
             body: formData,
+            signal: controller.signal
           });
 
-          hide();
+          clearTimeout(timeoutId);
+          hideMessage();
 
           if (!response.ok) {
-            throw new Error(`Transcription failed: ${response.status}`);
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            throw new Error(errorData.error || `Transcription failed: ${response.status}`);
           }
 
           const data = await response.json();
+          if (!data.text) {
+            throw new Error('No transcription text received');
+          }
+          
           form.setFieldsValue({ message: data.text });
           messageApi.success('Speech transcribed successfully');
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Transcription error:', error);
-          messageApi.error('Failed to transcribe speech');
+          hideMessage?.();
+          if (error instanceof Error) {
+            if (error.name === 'AbortError') {
+              messageApi.error('Transcription timed out. Please try again with a shorter recording (max 30 seconds).');
+            } else {
+              messageApi.error(`Failed to transcribe speech: ${error.message}`);
+            }
+          } else {
+            messageApi.error('Failed to transcribe speech: Unknown error');
+          }
         }
       };
 

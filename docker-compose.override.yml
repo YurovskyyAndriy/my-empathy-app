@@ -20,6 +20,7 @@ services:
     environment:
       - VITE_BACKEND_URL=http://localhost:${BACKEND_PORT:-4000}
       - VITE_VECTOR_STORE_URL=http://localhost:8082
+      - VITE_SPEECH_SERVICE_URL=http://localhost:5005
     command: npm run dev -- --host
 
   speech-service:
